@@ -351,6 +351,14 @@ def main():
             from callbacks import NanGuardCallback
 
             self.add_callback(NanGuardCallback())
+            # WandbCallback must run AFTER FlopsCallback mutates `logs`, or the
+            # flops/mfu keys never reach wandb (observed on main-04: computed
+            # then dropped). Move any report-to integration callbacks to the end.
+            cbs = self.callback_handler.callbacks
+            integrations = [c for c in cbs if type(c).__name__ in ("WandbCallback",)]
+            for c in integrations:
+                cbs.remove(c)
+                cbs.append(c)
             self.add_callback(
                 KeepCheckpointCallback(args.keep_steps, os.path.join(exp_dir, "keep"))
             )

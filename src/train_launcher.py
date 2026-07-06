@@ -73,6 +73,41 @@ def resolve_auto_roots(args):
     print(f"[launcher] auto roots: {len(roots)} datasets")
 
 
+def patch_uniform_image_size(size: int = 256):
+    """Force a uniform image size across the heterogeneous camera mixture.
+
+    N1.7's albumentations recipe (SmallestMaxSize -> FractionalRandomCrop ->
+    SmallestMaxSize) is aspect-ratio-preserving BY DESIGN, so any sample or
+    batch mixing 16:9 and 4:3 cameras crashes torch.stack ([256,455] vs
+    [256,346]; observed deterministically at step ~2772 on main-02/03; the
+    `letter_box_transform` flag only exists in the unused torchvision branch).
+    We append LongestMaxSize + PadIfNeeded (true letterbox) to both built
+    pipelines — deterministic ops, safe under ReplayCompose replay semantics.
+    """
+    import albumentations as A
+    import cv2
+
+    import gr00t.model.gr00t_n1d7.processing_gr00t_n1d7 as P
+
+    _orig = P.build_image_transformations_albumentations
+
+    def patched(*a, **kw):
+        train_t, eval_t = _orig(*a, **kw)
+        fixed = lambda: [  # noqa: E731 — fresh instances per pipeline
+            A.LongestMaxSize(max_size=size, interpolation=cv2.INTER_AREA),
+            A.PadIfNeeded(
+                min_height=size, min_width=size,
+                border_mode=cv2.BORDER_CONSTANT, value=0, position="center",
+            ),
+        ]
+        train_t = type(train_t)([*train_t.transforms, *fixed()])
+        eval_t = type(eval_t)([*eval_t.transforms, *fixed()])
+        print(f"[launcher] patched image transforms -> uniform {size}x{size} letterbox")
+        return train_t, eval_t
+
+    P.build_image_transformations_albumentations = patched
+
+
 def load_modality_config(path: str):
     import importlib
 
@@ -121,12 +156,6 @@ def build_config(args, resume: bool):
     m.extra_augmentation_config = None
     m.load_bf16 = False
     m.reproject_vision = False
-    # Heterogeneous camera mixture (16:9 + 4:3 repos): the albumentations path
-    # does AR-preserving shortest-edge resize, so batches spanning repos with
-    # different aspect ratios crash torch.stack ([256,455] vs [256,346], seen
-    # on main-02 at step ~2772). Letterbox pads to a fixed aspect -> uniform
-    # tensors regardless of source camera geometry.
-    m.letter_box_transform = True
     m.model_name = "nvidia/Cosmos-Reason2-2B"
     m.backbone_trainable_params_fp32 = True
     m.use_relative_action = True
@@ -244,6 +273,7 @@ def main():
     from lora import apply_lora
 
     load_modality_config(MODALITY_CONFIG)
+    patch_uniform_image_size(256)
 
     if args.dataset_roots.startswith("auto"):
         resolve_auto_roots(args)

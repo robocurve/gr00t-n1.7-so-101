@@ -121,6 +121,12 @@ def build_config(args, resume: bool):
     m.extra_augmentation_config = None
     m.load_bf16 = False
     m.reproject_vision = False
+    # Heterogeneous camera mixture (16:9 + 4:3 repos): the albumentations path
+    # does AR-preserving shortest-edge resize, so batches spanning repos with
+    # different aspect ratios crash torch.stack ([256,455] vs [256,346], seen
+    # on main-02 at step ~2772). Letterbox pads to a fixed aspect -> uniform
+    # tensors regardless of source camera geometry.
+    m.letter_box_transform = True
     m.model_name = "nvidia/Cosmos-Reason2-2B"
     m.backbone_trainable_params_fp32 = True
     m.use_relative_action = True

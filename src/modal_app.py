@@ -104,6 +104,12 @@ def prepare_megamix(val_ratio: float = 0.05):
     data_vol.commit()
 
 
+# Training needs zero HF traffic (model + data cached on the volume). Offline
+# mode makes runs immune to the org-wide HF API rate limit (1000 req/5min),
+# which concurrent sweeps + data prep otherwise exhaust.
+TRAIN_ENV = {"HF_HUB_OFFLINE": "1", "WANDB_PROJECT": "gr00t-n17-so101"}
+
+
 def _train_cmd(
     exp_name: str,
     dataset_roots: str,
@@ -152,7 +158,7 @@ def smoke_train(steps: int = 60, fresh: bool = True):
                 eval_steps=25,
                 fresh=fresh,
             ),
-            env={"WANDB_RUN_ID": "smoke", "WANDB_PROJECT": "gr00t-n17-so101"},
+            env={**TRAIN_ENV, "WANDB_RUN_ID": "smoke"},
         )
     finally:
         ckpt_vol.commit()
@@ -174,7 +180,7 @@ def sweep_one(lr: float, bs: int, steps: int = 250):
                 eval_steps=50,
                 fresh=True,
             ),
-            env={"WANDB_RUN_ID": exp, "WANDB_PROJECT": "gr00t-n17-so101"},
+            env={**TRAIN_ENV, "WANDB_RUN_ID": exp},
         )
     finally:
         ckpt_vol.commit()
@@ -211,7 +217,7 @@ def train(
                 exp_name, dataset_roots, val_roots, lr, bs, max_steps,
                 keep_steps=keep_steps, eval_steps=eval_steps, fresh=fresh,
             ),
-            env={"WANDB_RUN_ID": exp_name, "WANDB_PROJECT": "gr00t-n17-so101"},
+            env={**TRAIN_ENV, "WANDB_RUN_ID": exp_name},
         )
     finally:
         ckpt_vol.commit()
@@ -223,7 +229,7 @@ def filter_manifest():
     data_vol.commit()
 
 
-@app.function(image=image, volumes=VOLS, secrets=secrets, timeout=12 * 3600, cpu=8, memory=32768)
+@app.function(image=image, volumes=VOLS, secrets=secrets, timeout=12 * 3600, cpu=8, memory=32768, max_containers=3)
 def prepare_one_repo(spec_json: str):
     """Prepare a single filtered repo. spec_json: one entry of repos_filtered.json."""
     _run("/root/proj/src/prepare_data.py", "--spec-json", spec_json, "--out-base", "/data/v2")

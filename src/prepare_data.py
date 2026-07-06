@@ -42,10 +42,27 @@ def log(msg: str):
     print(f"[prepare] {msg}", flush=True)
 
 
+def _hf_retry(fn, attempts: int = 4, base_sleep: float = 120.0):
+    """Retry HF hub calls that hit the org-wide 429 rate limit (1000 req/5min)."""
+    import time
+
+    for i in range(attempts):
+        try:
+            return fn()
+        except Exception as e:  # noqa: BLE001
+            msg = str(e)
+            retryable = "429" in msg or "rate limit" in msg.lower() or "quota" in msg.lower()
+            if not retryable or i == attempts - 1:
+                raise
+            sleep = base_sleep * (i + 1)
+            log(f"rate limited; retrying in {sleep:.0f}s ({i + 1}/{attempts - 1})")
+            time.sleep(sleep)
+
+
 def fetch_info(repo_id: str) -> dict:
     from huggingface_hub import hf_hub_download
 
-    path = hf_hub_download(repo_id, "meta/info.json", repo_type="dataset")
+    path = _hf_retry(lambda: hf_hub_download(repo_id, "meta/info.json", repo_type="dataset"))
     with open(path) as f:
         return json.load(f)
 
@@ -53,7 +70,7 @@ def fetch_info(repo_id: str) -> dict:
 def download_v2(repo_id: str, dest: Path):
     from huggingface_hub import snapshot_download
 
-    snapshot_download(repo_id, repo_type="dataset", local_dir=str(dest))
+    _hf_retry(lambda: snapshot_download(repo_id, repo_type="dataset", local_dir=str(dest)))
 
 
 def sanitize_v3_episode_metadata(root: Path):
@@ -102,7 +119,7 @@ def convert_v3(repo_id: str, work: Path) -> Path:
     from huggingface_hub import snapshot_download
 
     nested_src = work / repo_id
-    snapshot_download(repo_id, repo_type="dataset", local_dir=str(nested_src))
+    _hf_retry(lambda: snapshot_download(repo_id, repo_type="dataset", local_dir=str(nested_src)))
     sanitize_v3_episode_metadata(nested_src)
     cmd = [
         "uv", "run", "--no-sync", "--project", "scripts/lerobot_conversion",
@@ -127,10 +144,12 @@ def load_annotations(repo_id: str):
     from huggingface_hub import hf_hub_download
 
     try:
-        path = hf_hub_download(
-            MANIFEST_REPO,
-            f"language_annotations/{repo_id}/tasks_annotated.parquet",
-            repo_type="dataset",
+        path = _hf_retry(
+            lambda: hf_hub_download(
+                MANIFEST_REPO,
+                f"language_annotations/{repo_id}/tasks_annotated.parquet",
+                repo_type="dataset",
+            )
         )
     except Exception:  # noqa: BLE001
         return None

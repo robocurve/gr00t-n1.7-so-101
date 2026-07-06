@@ -104,10 +104,13 @@ def prepare_megamix(val_ratio: float = 0.05):
     data_vol.commit()
 
 
-# Training needs zero HF traffic (model + data cached on the volume). Offline
-# mode makes runs immune to the org-wide HF API rate limit (1000 req/5min),
-# which concurrent sweeps + data prep otherwise exhaust.
-TRAIN_ENV = {"HF_HUB_OFFLINE": "1", "WANDB_PROJECT": "gr00t-n17-so101"}
+# NOTE: HF_HUB_OFFLINE=1 does NOT work here — the processor path calls
+# model_info(nvidia/Cosmos-Reason2-2B) (public metadata; the gated files are
+# never downloaded, tokenizer ships inside the GR00T repo) and offline mode
+# hard-blocks that API call. Training stays online; its HF traffic is a few
+# dozen cached-etag/metadata calls per run. The 429 disaster came from 39
+# unthrottled prep containers, now capped at max_containers=3.
+TRAIN_ENV = {"WANDB_PROJECT": "gr00t-n17-so101"}
 
 
 def _train_cmd(

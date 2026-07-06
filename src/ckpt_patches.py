@@ -87,12 +87,13 @@ def assert_compat(training_args):
     assert int(os.environ.get("WORLD_SIZE", "1")) == 1, "trainable-only ckpt: single process only"
 
 
-def wipe_or_resume(exp_dir: str, fresh: bool) -> bool:
+def wipe_or_resume(exp_dir: str, fresh: bool, volume=None) -> bool:
     """Decide resume INSIDE the container at every (re)start.
 
     fresh=True wipes exactly once per operator launch: the wipe is recorded in
-    a marker whose presence (with matching pid-independent token from env
-    MODAL_TASK_ID or a plain flag file) prevents retries from re-wiping.
+    a `.fresh_done` marker so retries of the same invocation never re-wipe.
+    The volume is committed immediately after the wipe so a preemption in the
+    window can't resurrect the old experiment dir.
     Returns True iff a resumable checkpoint exists after any wipe.
     """
     from transformers.trainer_utils import get_last_checkpoint
@@ -106,6 +107,11 @@ def wipe_or_resume(exp_dir: str, fresh: bool) -> bool:
         with open(marker, "w") as f:
             f.write("wiped once; retries must not re-wipe\n")
         print(f"[resume] fresh launch: wiped {exp_dir}")
+        if volume is not None:
+            try:
+                volume.commit()
+            except Exception as e:  # noqa: BLE001
+                print(f"[resume] volume commit after wipe failed: {e}")
     last = get_last_checkpoint(exp_dir)
     print(f"[resume] last checkpoint in {exp_dir}: {last}")
     return last is not None

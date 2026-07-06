@@ -18,11 +18,9 @@ the training loop.
 from __future__ import annotations
 
 import subprocess
-import sys
 import threading
 import time
 
-DCGM_BINDINGS = "/usr/share/datacenter-gpu-manager-4/bindings/python3"
 FIELD_TENSOR = 1004  # DCGM_FI_PROF_PIPE_TENSOR_ACTIVE
 FIELD_DRAM = 1005  # DCGM_FI_PROF_DRAM_ACTIVE
 
@@ -40,6 +38,8 @@ class GpuMetricsSampler:
 
     # ---------- tier setup ----------
     def _try_dcgm(self) -> bool:
+        """Use the dcgmi CLI (verified working under Modal's gVisor) instead of
+        the python bindings (returned blank values there)."""
         try:
             # idempotent: nv-hostengine exits nonzero if already running; ignore.
             subprocess.run(
@@ -47,27 +47,49 @@ class GpuMetricsSampler:
                 capture_output=True, timeout=60, check=False,
             )
             time.sleep(1.0)
-            if DCGM_BINDINGS not in sys.path:
-                sys.path.append(DCGM_BINDINGS)
-            from DcgmReader import DcgmReader  # type: ignore
-
-            reader = DcgmReader(
-                fieldIds=[FIELD_TENSOR, FIELD_DRAM],
-                updateFrequency=int(self.interval_s * 1e6),
-                hostname="127.0.0.1",
-            )
-            data = reader.GetLatestGpuValuesAsFieldIdDict()
-            # must contain at least one GPU with real values eventually; probe twice
-            time.sleep(self.interval_s if self.interval_s < 3 else 3)
-            data = reader.GetLatestGpuValuesAsFieldIdDict()
-            if not data:
+            vals = self._dmon_once(probe=True)
+            if vals is None:
+                print("[gpu_metrics] dcgmi probe returned no parseable values; trying GPM")
                 return False
-            self._reader = reader
             self.source = "dcgm"
             return True
         except Exception as e:  # noqa: BLE001
             print(f"[gpu_metrics] DCGM unavailable ({type(e).__name__}: {e}); trying GPM")
             return False
+
+    def _dmon_once(self, probe: bool = False) -> dict | None:
+        """One dcgmi dmon poll: 2 samples 1s apart, take the last parseable row."""
+        out = subprocess.run(
+            ["dcgmi", "dmon", "-e", f"{FIELD_TENSOR},{FIELD_DRAM}", "-c", "2", "-d", "1000"],
+            capture_output=True, text=True, timeout=30,
+        )
+        if out.returncode != 0:
+            if probe:
+                print(f"[gpu_metrics] dcgmi rc={out.returncode}: {out.stderr[:200]}")
+            return None
+        tvals, dvals = [], []
+        for line in out.stdout.splitlines():
+            parts = line.split()
+            # rows look like: "GPU 0   0.123   0.456"; headers contain '#' or 'Entity'
+            if len(parts) >= 4 and parts[0] == "GPU":
+                try:
+                    t, d = float(parts[2]), float(parts[3])
+                except ValueError:
+                    continue
+                if 0.0 <= t <= 1.0:
+                    tvals.append(t)
+                if 0.0 <= d <= 1.0:
+                    dvals.append(d)
+        if not tvals and not dvals:
+            if probe:
+                print(f"[gpu_metrics] no parseable dmon rows in:\n{out.stdout[:500]}")
+            return None
+        res = {}
+        if tvals:
+            res["dcgm/DCGM_FI_PROF_PIPE_TENSOR_ACTIVE"] = sum(tvals) / len(tvals)
+        if dvals:
+            res["dcgm/DCGM_FI_PROF_DRAM_ACTIVE"] = sum(dvals) / len(dvals)
+        return res
 
     def _try_gpm(self) -> bool:
         try:
@@ -104,20 +126,7 @@ class GpuMetricsSampler:
 
     # ---------- sampling ----------
     def _sample_dcgm(self) -> dict:
-        data = self._reader.GetLatestGpuValuesAsFieldIdDict()
-        out = {}
-        vals_t, vals_d = [], []
-        for _gpu, fields in data.items():
-            for fid, val in fields.items():
-                v = getattr(val, "value", val)
-                if not isinstance(v, (int, float)) or v < 0 or v > 1e6:
-                    continue
-                (vals_t if int(fid) == FIELD_TENSOR else vals_d).append(float(v))
-        if vals_t:
-            out["dcgm/DCGM_FI_PROF_PIPE_TENSOR_ACTIVE"] = sum(vals_t) / len(vals_t)
-        if vals_d:
-            out["dcgm/DCGM_FI_PROF_DRAM_ACTIVE"] = sum(vals_d) / len(vals_d)
-        return out
+        return self._dmon_once() or {}
 
     def _sample_gpm(self) -> dict:
         nv = self._nv

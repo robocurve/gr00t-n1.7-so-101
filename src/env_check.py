@@ -97,7 +97,7 @@ def main():
         # busy loop of bf16 matmuls to light up tensor cores
         a = torch.randn(4096, 4096, dtype=torch.bfloat16, device="cuda")
         t0 = time.time()
-        while time.time() - t0 < 8:
+        while time.time() - t0 < 15:
             a = a @ a
             a = a / a.norm()
         torch.cuda.synchronize()

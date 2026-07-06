@@ -224,7 +224,7 @@ def train(
     fresh: bool = False,
     eval_batches: int = 48,
     ds_weights_alpha: float = 0.5,
-    save_steps: int = 300,  # Young-Daly optimum (see docs/checkpoint-interval.md); was 5
+    save_steps: int = 250,  # Young-Daly flat optimum, aligned with eval_steps (docs/checkpoint-interval.md)
 ):
     """Main training. Preemption-safe: auto-resumes from the latest rolling checkpoint.
 

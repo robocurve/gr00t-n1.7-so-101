@@ -1,7 +1,9 @@
 # Optimal preemption checkpoint interval (Young–Daly)
 
-Decision record, 2026-07-06. Applied from main-04 step ~3,300 onward: `save_steps=300`
-(rolling window still 3 slots; durable `keep/` copies every 500 unchanged).
+Decision record, 2026-07-06. Applied from main-04 step ~3,300 onward: `save_steps=250` — chosen over the raw optimum band
+midpoint so saves align with `eval_steps=250` (every kept checkpoint carries an exact eval
+number) and with `keep_steps=500` (keeps fire every 2nd save; with 300 they would only fire
+at LCM(300,500)=1,500). Rolling window still 3 slots.
 
 ## Problem
 

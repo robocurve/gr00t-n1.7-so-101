@@ -20,8 +20,10 @@ Key implementation points:
 
 - **LoRA**: peft on the action DiT + [`category-lora`](https://github.com/jeqcho/category-lora)
   on GR00T's `CategorySpecificLinear` layers; backbone frozen.
-- **Preemption-safe checkpointing**: trainable-only checkpoints every 5 steps (rolling window
-  of 3) + durable keeps at an interval; auto-resume inside the Modal container.
+- **Preemption-safe checkpointing**: trainable-only rolling checkpoints (3 slots) + durable
+  keeps every 500 steps; auto-resume inside the Modal container. Interval started at 5 steps,
+  re-derived from measured costs to 300 (Young-Daly; the 5-step cadence cost ~50% of
+  wall-clock) — see [docs/checkpoint-interval.md](docs/checkpoint-interval.md).
 - **Logging**: wandb train/test loss, `DCGM_FI_PROF_PIPE_TENSOR_ACTIVE`,
   `DCGM_FI_PROF_DRAM_ACTIVE`, FLOPs/MFU.
 - **Train/test split**: episode-level holdout (5%, min 1, seeded) per source repo.

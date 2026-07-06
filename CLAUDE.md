@@ -14,7 +14,7 @@ path is dead code; we ship our own eval callback).
 - Everything trains via `src/train_launcher.py`, which monkeypatches
   `gr00t.experiment.experiment` (LoRA via patched `return_model`, callbacks via a
   `Gr00tTrainer` subclass, trainable-only checkpointing via `_save`/`_load_from_checkpoint`).
-- Checkpoints: every 5 steps rolling×3 (trainable-only, small) + durable `keep/` copies.
+- Checkpoints: rolling×3 trainable-only, save_steps=300 (Young-Daly optimum, see docs/checkpoint-interval.md; was 5 → ~50% wall-clock tax) + durable `keep/` copies every 500.
   Resume is auto-detected in-container (`wipe_or_resume`); NEVER pass static resume flags.
 - wandb: project `gr00t-n17-so101`; run id == exp name (`WANDB_RUN_ID`) so preemption
   retries continue the same run.

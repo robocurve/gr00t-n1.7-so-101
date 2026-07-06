@@ -124,6 +124,7 @@ def _train_cmd(
     eval_steps: int,
     fresh: bool,
     extra: list[str] | None = None,
+    save_steps: int = 5,
 ) -> list[str]:
     cmd = [
         "/root/proj/src/train_launcher.py",
@@ -133,7 +134,7 @@ def _train_cmd(
         "--lr", str(lr),
         "--global-batch-size", str(bs),
         "--max-steps", str(max_steps),
-        "--save-steps", "5",
+        "--save-steps", str(save_steps),
         "--save-total-limit", "3",
         "--keep-steps", str(keep_steps),
         "--eval-steps", str(eval_steps),
@@ -223,6 +224,7 @@ def train(
     fresh: bool = False,
     eval_batches: int = 48,
     ds_weights_alpha: float = 0.5,
+    save_steps: int = 300,  # Young-Daly optimum (see docs/checkpoint-interval.md); was 5
 ):
     """Main training. Preemption-safe: auto-resumes from the latest rolling checkpoint.
 
@@ -234,6 +236,7 @@ def train(
             *_train_cmd(
                 exp_name, dataset_roots, val_roots, lr, bs, max_steps,
                 keep_steps=keep_steps, eval_steps=eval_steps, fresh=fresh,
+                save_steps=save_steps,
                 extra=[
                     "--eval-batches", str(eval_batches),
                     "--ds-weights-alpha", str(ds_weights_alpha),

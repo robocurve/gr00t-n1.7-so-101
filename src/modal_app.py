@@ -186,7 +186,8 @@ def sweep_one(lr: float, bs: int, steps: int = 250):
     volumes=VOLS,
     secrets=secrets,
     timeout=23 * 3600,
-    retries=modal.Retries(max_retries=24, initial_delay=60.0, backoff_coefficient=1.0),
+    retries=modal.Retries(max_retries=10, initial_delay=60.0, backoff_coefficient=1.0),  # Modal max
+    # Resume is idempotent; if 10 retries ever exhaust, the local monitor relaunches.
 )
 def train(
     exp_name: str,

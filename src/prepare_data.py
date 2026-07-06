@@ -236,8 +236,15 @@ def write_modality(root: Path, camera_map: dict[str, str]):
 
 
 def validate_root(root: Path, expect_min_episodes: int = 1):
-    """GR00T loader smoke: build the sharded dataset and process two samples."""
+    """GR00T loader smoke: stats generation + sharded dataset construction."""
     sys.path.insert(0, GR00T_DIR)
+    import importlib
+
+    sys.path.append(f"{GR00T_DIR}/examples/SO100")
+    importlib.import_module("so100_config")  # registers new_embodiment modality configs
+
+    from gr00t.configs.base_config import get_default_config
+    from gr00t.data.dataset.sharded_single_step_dataset import ShardedSingleStepDataset
     from gr00t.data.embodiment_tags import EmbodimentTag
     from gr00t.data.stats import generate_rel_stats, generate_stats
 
@@ -246,7 +253,19 @@ def validate_root(root: Path, expect_min_episodes: int = 1):
     assert info["total_episodes"] >= expect_min_episodes
     generate_stats(str(root))
     generate_rel_stats(str(root), EmbodimentTag("new_embodiment"))
-    log(f"validated {root}: {info['total_episodes']} eps, {info['total_frames']} frames")
+
+    cfg = get_default_config()
+    ds = ShardedSingleStepDataset(
+        dataset_path=str(root),
+        embodiment_tag=EmbodimentTag("new_embodiment"),
+        modality_configs=cfg.data.modality_configs["new_embodiment"],
+        shard_size=64,
+        episode_sampling_rate=1.0,
+        seed=17,
+        allow_padding=cfg.data.allow_padding,
+    )
+    assert len(ds) > 0, f"dataset has no shards: {root}"
+    log(f"validated {root}: {info['total_episodes']} eps, {info['total_frames']} frames, {len(ds)} shards")
 
 
 def prepare_repo(

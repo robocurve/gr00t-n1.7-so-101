@@ -26,8 +26,7 @@ BACKBONE_MARKERS = ("backbone", "vlm", "language_model", "visual", "vision", "qw
 def apply_lora(model, r: int = 32, alpha: int = 64, dropout: float = 0.05):
     """Mutate `model` in place; returns the model. Summary in model._lora_summary."""
     from category_lora import CategoryLoRAConfig, wrap_in_place
-    from peft.tuners.lora import LoraModel
-    from peft import LoraConfig
+    from peft import LoraConfig, inject_adapter_in_model
 
     # 1) Freeze everything first.
     for p in model.parameters():
@@ -51,8 +50,9 @@ def apply_lora(model, r: int = 32, alpha: int = 64, dropout: float = 0.05):
         target_modules=linear_targets,
         bias="none",
     )
-    # LoraModel injects adapters in place on the wrapped module tree.
-    LoraModel(model, {"default": lora_config}, "default")
+    # Documented peft API for custom (non-HF-PreTrainedModel) architectures:
+    # injects LoraLayer wrappers in place, no PeftModel wrapper.
+    model = inject_adapter_in_model(lora_config, model)
 
     # 4) category-lora on CategorySpecificLinear (3D per-category weights).
     n_cat = wrap_in_place(

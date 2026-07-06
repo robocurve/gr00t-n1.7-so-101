@@ -24,21 +24,20 @@ H100_BF16_PEAK = 989e12  # dense BF16 FLOP/s per H100
 
 
 def _model_call(model, batch):
-    import inspect
+    # Mirror HF Trainer.compute_loss exactly: batches are mappings whose keys
+    # are forward() parameter names (GR00T's collator emits {"inputs": {...}}).
+    from collections.abc import Mapping
 
-    try:
-        params = list(inspect.signature(model.forward).parameters)
-        if params[:1] == ["inputs"]:
-            return model(batch)
-    except (ValueError, TypeError):
-        pass
+    assert isinstance(batch, Mapping), f"unexpected batch type {type(batch)}"
     return model(**batch)
 
 
 def _to_device(batch, device):
+    from collections.abc import Mapping
+
     if torch.is_tensor(batch):
         return batch.to(device)
-    if isinstance(batch, dict):
+    if isinstance(batch, Mapping):  # includes transformers BatchFeature (UserDict)
         return {k: _to_device(v, device) for k, v in batch.items()}
     if isinstance(batch, (list, tuple)):
         return type(batch)(_to_device(v, device) for v in batch)

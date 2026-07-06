@@ -33,6 +33,19 @@ Key implementation points:
 - `src/` — Modal app + training/data code
 - `logs/` — local monitoring logs
 
+## Status (2026-07-06)
+
+- ✅ Stage 1 gate passed: megamix converted (with metadata sanitization — the source repo has
+  duplicate episode rows + stale file indices), 380/20 split, 60-step smoke train with LoRA
+  (55.4M trainable / 3.20B = 1.73%), eval loss, FLOPs, rolling checkpoints (3×5-step,
+  trainable-only ≈ seconds to save), keep-copies, and a live kill→resume drill (restore at
+  step 60 → continue to 120 with loss continuity).
+- ⚠️ DCGM `PIPE_TENSOR_ACTIVE`/`DRAM_ACTIVE` are **not collectable on Modal**: the DCP
+  profiling data path is blocked under gVisor (dcgmi works but streams N/A; NVML GPM errors).
+  The sampler transparently falls back to NVML utilization (`gpu/util`, `gpu/mem_util`,
+  `dcgm/source_tier=3` in wandb) rather than mislabeling a different metric.
+- 🔄 LR × batch sweep (6 × 250 steps) and Stage-2 subset prep (39 repos) running.
+
 ## Output
 
 Final checkpoint published to HuggingFace: `jeqcho/gr00t-n1.7-so101-molmoact2` (upon completion).

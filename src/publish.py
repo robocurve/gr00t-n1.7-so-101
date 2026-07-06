@@ -54,7 +54,7 @@ def main():
     ckpt = pick_checkpoint(exp_dir, args.step)
     print(f"publishing from {ckpt}")
 
-    repo_id = args.repo_id or f"{os.environ.get('HF_USER_ID', 'jeqcho')}/gr00t-n1.7-so101-molmoact2"
+    repo_id = args.repo_id or "robocurve/gr00t-n1.7-so101-molmoact2"
 
     # --- rebuild model with LoRA, load trainable weights, merge ---
     from gr00t.model.gr00t_n1d7.gr00t_n1d7 import Gr00tN1d7

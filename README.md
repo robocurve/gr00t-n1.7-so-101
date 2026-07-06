@@ -63,4 +63,4 @@ Key implementation points:
 
 ## Output
 
-Final checkpoint published to HuggingFace: `jeqcho/gr00t-n1.7-so101-molmoact2` (upon completion).
+Final checkpoint published to HuggingFace: [`robocurve/gr00t-n1.7-so101-molmoact2`](https://huggingface.co/robocurve/gr00t-n1.7-so101-molmoact2) (upon completion).

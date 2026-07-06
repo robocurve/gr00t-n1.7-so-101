@@ -50,9 +50,11 @@ Key implementation points:
   |---|---|---|
   | 5e-5 | 1.04 | 0.97 |
   | 1e-4 | 0.93 | 0.79 |
-  | 3e-4 | 0.75 | **0.59** |
+  | 3e-4 | 0.75 | 0.59 |
+  | 6e-4 | — | **0.44** |
+  | 1.2e-3 | — | 0.79 |
 
-  Monotone trend toward higher LR + bigger batch; boundary probe at lr=6e-4/bs=64 pending.
+  Optimum bracketed at **lr=6e-4, bs=64** (3e-4 → 0.59, 6e-4 → 0.44, 1.2e-3 → 0.79).
   (Eval-loss jitter of ±0.04 traced to the flow-matching head sampling noise in `forward`;
   now seeded via `fork_rng` for step-comparable curves.)
 - 🔄 Stage-2 subset prep (39 repos, throttled to 3 containers for HF rate limits) running.

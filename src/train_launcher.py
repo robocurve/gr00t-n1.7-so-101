@@ -151,7 +151,7 @@ def make_eval_batch_factory(args, pipeline_ref, config, embodiment_tag):
 
         val_roots = [p for p in args.val_roots.split(os.pathsep) if p]
         n_needed = args.eval_batch_size * args.eval_batches
-        samples = []
+        datasets = []
         for root in val_roots:
             generate_stats(root)
             generate_rel_stats(root, EmbodimentTag(embodiment_tag))
@@ -165,12 +165,19 @@ def make_eval_batch_factory(args, pipeline_ref, config, embodiment_tag):
                 allow_padding=config.data.allow_padding,
             )
             ds.set_processor(processor)
-            for shard_idx in range(len(ds)):
-                if len(samples) >= n_needed:
-                    break
-                samples.extend(ds.get_shard(shard_idx))
-            if len(samples) >= n_needed:
-                break
+            datasets.append(ds)
+        # Round-robin one shard at a time across roots so the cached eval set
+        # is representative of the whole mixture, not just the first root.
+        samples = []
+        cursors = [0] * len(datasets)
+        while len(samples) < n_needed and any(
+            cursors[i] < len(datasets[i]) for i in range(len(datasets))
+        ):
+            for i, ds in enumerate(datasets):
+                if len(samples) >= n_needed or cursors[i] >= len(ds):
+                    continue
+                samples.extend(ds.get_shard(cursors[i]))
+                cursors[i] += 1
         samples = samples[:n_needed]
         assert samples, f"no eval samples collected from {val_roots}"
         collator = processor.collator

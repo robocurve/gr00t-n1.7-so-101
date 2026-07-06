@@ -1,0 +1,509 @@
+[
+  {
+    "repo_id": "pbvr/so101_test002",
+    "version": "2.1",
+    "episodes": 201,
+    "frames": 52821,
+    "fps": 30,
+    "robot_type": "so101",
+    "camera_map": {
+      "front": "observation.images.topdown",
+      "wrist": "observation.images.handeye"
+    },
+    "has_annotations": true
+  },
+  {
+    "repo_id": "Cornito/so101_chess17",
+    "version": "2.1",
+    "episodes": 190,
+    "frames": 137956,
+    "fps": 30,
+    "robot_type": "so101",
+    "camera_map": {
+      "front": "observation.images.phone",
+      "wrist": "observation.images.wrist"
+    },
+    "has_annotations": true
+  },
+  {
+    "repo_id": "pbvr/so101_test003",
+    "version": "2.1",
+    "episodes": 150,
+    "frames": 37146,
+    "fps": 30,
+    "robot_type": "so101",
+    "camera_map": {
+      "front": "observation.images.topdown",
+      "wrist": "observation.images.handeye"
+    },
+    "has_annotations": true
+  },
+  {
+    "repo_id": "Rorschach4153/so101_30_1",
+    "version": "2.1",
+    "episodes": 121,
+    "frames": 112070,
+    "fps": 30,
+    "robot_type": "so101",
+    "camera_map": {
+      "front": "observation.images.topdown",
+      "wrist": "observation.images.wrist"
+    },
+    "has_annotations": true
+  },
+  {
+    "repo_id": "Rorschach4153/so101_60_new",
+    "version": "2.1",
+    "episodes": 115,
+    "frames": 155662,
+    "fps": 60,
+    "robot_type": "so101",
+    "camera_map": {
+      "front": "observation.images.topdown",
+      "wrist": "observation.images.wrist"
+    },
+    "has_annotations": true
+  },
+  {
+    "repo_id": "Cornito/so101_tea2",
+    "version": "2.1",
+    "episodes": 101,
+    "frames": 78833,
+    "fps": 30,
+    "robot_type": "so101",
+    "camera_map": {
+      "front": "observation.images.phone",
+      "wrist": "observation.images.wrist"
+    },
+    "has_annotations": true
+  },
+  {
+    "repo_id": "samsitol/so101_cube",
+    "version": "2.1",
+    "episodes": 100,
+    "frames": 59378,
+    "fps": 30,
+    "robot_type": "so101",
+    "camera_map": {
+      "front": "observation.images.base",
+      "wrist": "observation.images.wrist"
+    },
+    "has_annotations": true
+  },
+  {
+    "repo_id": "RickRain/so101_test_single_lego",
+    "version": "2.1",
+    "episodes": 95,
+    "frames": 25330,
+    "fps": 30,
+    "robot_type": "so101",
+    "camera_map": {
+      "front": "observation.images.webcam",
+      "wrist": "observation.images.wrist"
+    },
+    "has_annotations": true
+  },
+  {
+    "repo_id": "Rorschach4153/so101_30_fold",
+    "version": "2.1",
+    "episodes": 61,
+    "frames": 72103,
+    "fps": 30,
+    "robot_type": "so101",
+    "camera_map": {
+      "front": "observation.images.topdown",
+      "wrist": "observation.images.wrist"
+    },
+    "has_annotations": true
+  },
+  {
+    "repo_id": "Haribot099/so101_60",
+    "version": "2.1",
+    "episodes": 60,
+    "frames": 27418,
+    "fps": 30,
+    "robot_type": "so101",
+    "camera_map": {
+      "front": "observation.images.phone",
+      "wrist": "observation.images.wrist"
+    },
+    "has_annotations": true
+  },
+  {
+    "repo_id": "bap13/so101_test_3",
+    "version": "2.1",
+    "episodes": 53,
+    "frames": 30617,
+    "fps": 30,
+    "robot_type": "so101",
+    "camera_map": {
+      "front": "observation.images.context",
+      "wrist": "observation.images.wrist"
+    },
+    "has_annotations": true
+  },
+  {
+    "repo_id": "jdgalviss/so101_test_bottle",
+    "version": "2.1",
+    "episodes": 53,
+    "frames": 49889,
+    "fps": 25,
+    "robot_type": "so101",
+    "camera_map": {
+      "front": "observation.images.context",
+      "wrist": "observation.images.wrist"
+    },
+    "has_annotations": true
+  },
+  {
+    "repo_id": "bap13/so101_test",
+    "version": "2.1",
+    "episodes": 52,
+    "frames": 35790,
+    "fps": 30,
+    "robot_type": "so101",
+    "camera_map": {
+      "front": "observation.images.context",
+      "wrist": "observation.images.wrist"
+    },
+    "has_annotations": true
+  },
+  {
+    "repo_id": "sunq/so101_lego",
+    "version": "2.1",
+    "episodes": 51,
+    "frames": 37924,
+    "fps": 30,
+    "robot_type": "so101",
+    "camera_map": {
+      "front": "observation.images.base",
+      "wrist": "observation.images.wrist"
+    },
+    "has_annotations": true
+  },
+  {
+    "repo_id": "Aadhavan/so101_bio_final",
+    "version": "2.1",
+    "episodes": 50,
+    "frames": 22326,
+    "fps": 30,
+    "robot_type": "so101",
+    "camera_map": {
+      "front": "observation.images.front",
+      "wrist": "observation.images.robocam"
+    },
+    "has_annotations": true
+  },
+  {
+    "repo_id": "Cornito/so101_test3",
+    "version": "2.1",
+    "episodes": 50,
+    "frames": 17893,
+    "fps": 30,
+    "robot_type": "so101",
+    "camera_map": {
+      "front": "observation.images.phone",
+      "wrist": "observation.images.wrist"
+    },
+    "has_annotations": true
+  },
+  {
+    "repo_id": "CrawlAiHuggingFace/multiplied_so101_test",
+    "version": "2.1",
+    "episodes": 50,
+    "frames": 22350,
+    "fps": 30,
+    "robot_type": "so101",
+    "camera_map": {
+      "front": "observation.images.laptop",
+      "wrist": "observation.images.wrist"
+    },
+    "has_annotations": true
+  },
+  {
+    "repo_id": "Kunalmod/so101_groot",
+    "version": "2.1",
+    "episodes": 50,
+    "frames": 47507,
+    "fps": 30,
+    "robot_type": "so101",
+    "camera_map": {
+      "front": "observation.images.base",
+      "wrist": "observation.images.wrist"
+    },
+    "has_annotations": true
+  },
+  {
+    "repo_id": "Kunalmod/so101_test_7",
+    "version": "2.1",
+    "episodes": 50,
+    "frames": 47507,
+    "fps": 30,
+    "robot_type": "so101",
+    "camera_map": {
+      "front": "observation.images.base",
+      "wrist": "observation.images.wrist"
+    },
+    "has_annotations": true
+  },
+  {
+    "repo_id": "M3thRocks/so101_test2",
+    "version": "2.1",
+    "episodes": 50,
+    "frames": 31221,
+    "fps": 30,
+    "robot_type": "so101",
+    "camera_map": {
+      "front": "observation.images.front",
+      "wrist": "observation.images.wrist"
+    },
+    "has_annotations": true
+  },
+  {
+    "repo_id": "emmanuel-v/so101_test_03",
+    "version": "2.1",
+    "episodes": 50,
+    "frames": 14882,
+    "fps": 30,
+    "robot_type": "so101",
+    "camera_map": {
+      "front": "observation.images.base",
+      "wrist": "observation.images.wrist"
+    },
+    "has_annotations": true
+  },
+  {
+    "repo_id": "seogenis/augmented_so101_test",
+    "version": "2.1",
+    "episodes": 50,
+    "frames": 22350,
+    "fps": 30,
+    "robot_type": "so101",
+    "camera_map": {
+      "front": "observation.images.laptop",
+      "wrist": "observation.images.wrist"
+    },
+    "has_annotations": true
+  },
+  {
+    "repo_id": "siyavash/so101_test",
+    "version": "2.1",
+    "episodes": 50,
+    "frames": 22350,
+    "fps": 30,
+    "robot_type": "so101",
+    "camera_map": {
+      "front": "observation.images.laptop",
+      "wrist": "observation.images.wrist"
+    },
+    "has_annotations": true
+  },
+  {
+    "repo_id": "jdgalviss/so101_test",
+    "version": "2.1",
+    "episodes": 34,
+    "frames": 18995,
+    "fps": 25,
+    "robot_type": "so101",
+    "camera_map": {
+      "front": "observation.images.context",
+      "wrist": "observation.images.wrist"
+    },
+    "has_annotations": true
+  },
+  {
+    "repo_id": "sincostangerines/stack_cubes_100",
+    "version": "2.1",
+    "episodes": 31,
+    "frames": 22419,
+    "fps": 30,
+    "robot_type": "so101",
+    "camera_map": {
+      "front": "observation.images.laptop",
+      "wrist": "observation.images.wrist"
+    },
+    "has_annotations": true
+  },
+  {
+    "repo_id": "fbeltrao/so101_unplug_cable_2",
+    "version": "2.1",
+    "episodes": 30,
+    "frames": 10552,
+    "fps": 30,
+    "robot_type": "so101",
+    "camera_map": {
+      "front": "observation.images.front",
+      "wrist": "observation.images.wrist"
+    },
+    "has_annotations": true
+  },
+  {
+    "repo_id": "ptizzza/so101_green_pompom",
+    "version": "2.1",
+    "episodes": 30,
+    "frames": 13440,
+    "fps": 30,
+    "robot_type": "so101",
+    "camera_map": {
+      "front": "observation.images.realsense_RGB",
+      "wrist": "observation.images.wrist"
+    },
+    "has_annotations": true
+  },
+  {
+    "repo_id": "taiobot/so101_test8",
+    "version": "2.1",
+    "episodes": 30,
+    "frames": 17849,
+    "fps": 30,
+    "robot_type": "so101",
+    "camera_map": {
+      "front": "observation.images.front",
+      "wrist": "observation.images.wrist"
+    },
+    "has_annotations": true
+  },
+  {
+    "repo_id": "samsitol/so101_block1",
+    "version": "2.1",
+    "episodes": 25,
+    "frames": 22225,
+    "fps": 30,
+    "robot_type": "so101",
+    "camera_map": {
+      "front": "observation.images.base",
+      "wrist": "observation.images.wrist"
+    },
+    "has_annotations": true
+  },
+  {
+    "repo_id": "RickRain/so101_test",
+    "version": "2.1",
+    "episodes": 22,
+    "frames": 19647,
+    "fps": 30,
+    "robot_type": "so101",
+    "camera_map": {
+      "front": "observation.images.webcam",
+      "wrist": "observation.images.wrist"
+    },
+    "has_annotations": true
+  },
+  {
+    "repo_id": "kaiserbuffle/hanoiv2",
+    "version": "2.1",
+    "episodes": 22,
+    "frames": 159764,
+    "fps": 30,
+    "robot_type": "so101",
+    "camera_map": {
+      "front": "observation.images.base",
+      "wrist": "observation.images.wrist"
+    },
+    "has_annotations": true
+  },
+  {
+    "repo_id": "kaiserbuffle/hanoiv5",
+    "version": "2.1",
+    "episodes": 22,
+    "frames": 143351,
+    "fps": 30,
+    "robot_type": "so101",
+    "camera_map": {
+      "front": "observation.images.base",
+      "wrist": "observation.images.wrist"
+    },
+    "has_annotations": true
+  },
+  {
+    "repo_id": "kaiserbuffle/hanoiv6",
+    "version": "2.1",
+    "episodes": 22,
+    "frames": 144214,
+    "fps": 30,
+    "robot_type": "so101",
+    "camera_map": {
+      "front": "observation.images.base",
+      "wrist": "observation.images.wrist"
+    },
+    "has_annotations": true
+  },
+  {
+    "repo_id": "sunq/so101_test",
+    "version": "2.1",
+    "episodes": 21,
+    "frames": 12499,
+    "fps": 30,
+    "robot_type": "so101",
+    "camera_map": {
+      "front": "observation.images.base",
+      "wrist": "observation.images.wrist"
+    },
+    "has_annotations": true
+  },
+  {
+    "repo_id": "psg777/glue3",
+    "version": "2.1",
+    "episodes": 20,
+    "frames": 7596,
+    "fps": 30,
+    "robot_type": "so101",
+    "camera_map": {
+      "front": "observation.images.base",
+      "wrist": "observation.images.gripper"
+    },
+    "has_annotations": true
+  },
+  {
+    "repo_id": "sincostangerines/stack_cubes_70",
+    "version": "2.1",
+    "episodes": 20,
+    "frames": 16204,
+    "fps": 30,
+    "robot_type": "so101",
+    "camera_map": {
+      "front": "observation.images.laptop",
+      "wrist": "observation.images.wrist"
+    },
+    "has_annotations": true
+  },
+  {
+    "repo_id": "sincostangerines/stack_cubes_p1",
+    "version": "2.1",
+    "episodes": 20,
+    "frames": 16772,
+    "fps": 30,
+    "robot_type": "so101",
+    "camera_map": {
+      "front": "observation.images.laptop",
+      "wrist": "observation.images.wrist"
+    },
+    "has_annotations": true
+  },
+  {
+    "repo_id": "sincostangerines/stack_cubes_p2",
+    "version": "2.1",
+    "episodes": 20,
+    "frames": 12913,
+    "fps": 30,
+    "robot_type": "so101",
+    "camera_map": {
+      "front": "observation.images.laptop",
+      "wrist": "observation.images.wrist"
+    },
+    "has_annotations": true
+  },
+  {
+    "repo_id": "sincostangerines/stack_cubes_p3",
+    "version": "2.1",
+    "episodes": 20,
+    "frames": 9305,
+    "fps": 30,
+    "robot_type": "so101",
+    "camera_map": {
+      "front": "observation.images.laptop",
+      "wrist": "observation.images.wrist"
+    },
+    "has_annotations": true
+  }
+]

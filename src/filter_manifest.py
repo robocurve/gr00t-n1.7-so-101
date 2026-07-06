@@ -113,19 +113,10 @@ def main():
     with open(args.manifest) as f:
         entries = json.load(f)
 
-    # which repos have language annotations (all of them per manifest, but be exact)
-    try:
-        tree = fetch_json(
-            "https://huggingface.co/api/datasets/allenai/MolmoAct2-SO100_101-Dataset/tree/main/language_annotations?recursive=true"
-        )
-        annotated = {
-            "/".join(item["path"].split("/")[1:3])
-            for item in tree
-            if item["path"].endswith("tasks_annotated.parquet")
-        }
-    except Exception as e:  # noqa: BLE001
-        print(f"annotation tree fetch failed ({e}); assuming all annotated")
-        annotated = {e.split(":", 1)[1] for e in entries}
+    # Every manifest repo ships language_annotations/<user>/<repo>/tasks_annotated.parquet
+    # (verified: 1220 files). prepare_data falls back to the repo's own tasks on 404,
+    # so just mark all manifest entries annotated.
+    annotated = {e.split(":", 1)[1] if ":" in e else e for e in entries}
 
     kept, dropped = [], {}
     with cf.ThreadPoolExecutor(max_workers=args.workers) as ex:

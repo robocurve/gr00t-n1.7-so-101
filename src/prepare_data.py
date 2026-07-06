@@ -42,17 +42,26 @@ def log(msg: str):
     print(f"[prepare] {msg}", flush=True)
 
 
-def _hf_retry(fn, attempts: int = 4, base_sleep: float = 120.0):
-    """Retry HF hub calls that hit the org-wide 429 rate limit (1000 req/5min)."""
+def _hf_retry(fn, attempts: int = 5, base_sleep: float = 330.0):
+    """Retry HF hub calls that hit the org-wide 429 rate limit (1000 req/5min).
+
+    snapshot_download masks 429s as LocalEntryNotFoundError ("cannot find the
+    appropriate snapshot folder"), so match those too. base_sleep > 300s lets
+    the 5-min quota window fully reset; snapshot_download resumes incrementally
+    so retried downloads make monotonic progress.
+    """
     import time
 
+    RETRYABLE = (
+        "429", "rate limit", "quota", "too many requests",
+        "cannot find the appropriate snapshot", "localentrynotfound",
+    )
     for i in range(attempts):
         try:
             return fn()
         except Exception as e:  # noqa: BLE001
-            msg = str(e)
-            retryable = "429" in msg or "rate limit" in msg.lower() or "quota" in msg.lower()
-            if not retryable or i == attempts - 1:
+            msg = f"{type(e).__name__}: {e}".lower()
+            if not any(r in msg for r in RETRYABLE) or i == attempts - 1:
                 raise
             sleep = base_sleep * (i + 1)
             log(f"rate limited; retrying in {sleep:.0f}s ({i + 1}/{attempts - 1})")
@@ -70,7 +79,13 @@ def fetch_info(repo_id: str) -> dict:
 def download_v2(repo_id: str, dest: Path):
     from huggingface_hub import snapshot_download
 
-    _hf_retry(lambda: snapshot_download(repo_id, repo_type="dataset", local_dir=str(dest)))
+    # max_workers=4 spreads per-file API calls over time; big v2.1 repos have
+    # ~600 files and the default 8 workers can blow the whole 5-min quota alone.
+    _hf_retry(
+        lambda: snapshot_download(
+            repo_id, repo_type="dataset", local_dir=str(dest), max_workers=4
+        )
+    )
 
 
 def sanitize_v3_episode_metadata(root: Path):

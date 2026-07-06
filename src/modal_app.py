@@ -245,7 +245,7 @@ def filter_manifest():
     data_vol.commit()
 
 
-@app.function(image=image, volumes=VOLS, secrets=secrets, timeout=12 * 3600, cpu=8, memory=32768, max_containers=3)
+@app.function(image=image, volumes=VOLS, secrets=secrets, timeout=12 * 3600, cpu=8, memory=32768, max_containers=1)
 def prepare_one_repo(spec_json: str):
     """Prepare a single filtered repo. spec_json: one entry of repos_filtered.json."""
     _run("/root/proj/src/prepare_data.py", "--spec-json", spec_json, "--out-base", "/data/v2")

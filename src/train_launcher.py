@@ -312,6 +312,9 @@ def main():
             )
             self.add_callback(flops_cb)
             self.add_callback(eval_cb)
+            from callbacks import NanGuardCallback
+
+            self.add_callback(NanGuardCallback())
             self.add_callback(
                 KeepCheckpointCallback(args.keep_steps, os.path.join(exp_dir, "keep"))
             )

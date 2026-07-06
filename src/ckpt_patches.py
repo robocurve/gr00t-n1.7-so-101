@@ -112,9 +112,60 @@ def wipe_or_resume(exp_dir: str, fresh: bool, volume=None) -> bool:
                 volume.commit()
             except Exception as e:  # noqa: BLE001
                 print(f"[resume] volume commit after wipe failed: {e}")
+    _discard_nonfinite_checkpoints(exp_dir)
     last = get_last_checkpoint(exp_dir)
+    if last is None:
+        last = _promote_keep_checkpoint(exp_dir)
     print(f"[resume] last checkpoint in {exp_dir}: {last}")
     return last is not None
+
+
+def _ckpt_is_finite(ckpt_dir: str) -> bool:
+    from safetensors.torch import load_file
+
+    path = os.path.join(ckpt_dir, TRAINABLE_WEIGHTS)
+    if not os.path.exists(path):
+        return False
+    try:
+        sd = load_file(path)
+    except Exception:  # noqa: BLE001
+        return False
+    return all(torch.isfinite(t).all() for t in sd.values())
+
+
+def _discard_nonfinite_checkpoints(exp_dir: str):
+    """Delete rolling checkpoints with NaN/inf trainable weights so resume
+    never restores a poisoned state (a NaN'd run saves poisoned checkpoints
+    every 5 steps before the NanGuard can fire)."""
+    for entry in sorted(os.listdir(exp_dir)):
+        if not entry.startswith("checkpoint-"):
+            continue
+        p = os.path.join(exp_dir, entry)
+        if os.path.isdir(p) and not _ckpt_is_finite(p):
+            print(f"[resume] discarding non-finite checkpoint {p}")
+            shutil.rmtree(p)
+
+
+def _promote_keep_checkpoint(exp_dir: str) -> str | None:
+    """If no valid rolling checkpoint remains, copy the newest finite keep/
+    checkpoint back into the exp dir so training resumes from the last good
+    durable state instead of starting over."""
+    keep = os.path.join(exp_dir, "keep")
+    if not os.path.isdir(keep):
+        return None
+    candidates = sorted(
+        (e for e in os.listdir(keep) if e.startswith("checkpoint-")),
+        key=lambda e: int(e.split("-")[1]),
+        reverse=True,
+    )
+    for entry in candidates:
+        src = os.path.join(keep, entry)
+        if _ckpt_is_finite(src):
+            dst = os.path.join(exp_dir, entry)
+            shutil.copytree(src, dst)
+            print(f"[resume] promoted keep checkpoint {src} -> {dst}")
+            return dst
+    return None
 
 
 def torch_rng_sanity():

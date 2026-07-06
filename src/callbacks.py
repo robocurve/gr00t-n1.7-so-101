@@ -156,6 +156,28 @@ class EvalLossCallback(TrainerCallback):
         self._eval(state)
 
 
+class NanGuardCallback(TrainerCallback):
+    """Abort immediately on non-finite train loss / grad norm.
+
+    A NaN'd run keeps burning GPU while writing poisoned rolling checkpoints
+    (observed on main-01 at lr=6e-4, step 2500). Failing fast preserves the
+    keep/ checkpoints and surfaces the failure to the monitor.
+    """
+
+    def on_log(self, args, state, control, logs=None, **kwargs):
+        import math
+
+        if not logs:
+            return
+        for key in ("loss", "grad_norm"):
+            v = logs.get(key)
+            if v is not None and (not isinstance(v, (int, float)) or not math.isfinite(v)):
+                raise FloatingPointError(
+                    f"NanGuard: non-finite {key}={v} at step {state.global_step}; aborting "
+                    "before poisoned checkpoints rotate out the good ones"
+                )
+
+
 class KeepCheckpointCallback(TrainerCallback):
     """Copy rolling checkpoints to a durable keep/ dir every keep_steps."""
 

@@ -28,7 +28,10 @@ app = modal.App("gr00t-n17-so101")
 
 image = (
     modal.Image.from_registry("nvidia/cuda:12.8.1-devel-ubuntu22.04", add_python="3.10")
-    .apt_install("git", "git-lfs", "ffmpeg", "libgl1", "libglib2.0-0", "wget", "gnupg", "curl")
+    .apt_install(
+        "git", "git-lfs", "ffmpeg", "libgl1", "libglib2.0-0", "wget", "gnupg", "curl",
+        "clang", "build-essential",  # evdev (lerobot->pynput dep) builds from source
+    )
     # DCGM 4 for PROF_PIPE_TENSOR_ACTIVE (1004) / PROF_DRAM_ACTIVE (1005)
     .run_commands(
         "wget -q https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb"

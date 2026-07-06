@@ -44,7 +44,18 @@ Key implementation points:
   profiling data path is blocked under gVisor (dcgmi works but streams N/A; NVML GPM errors).
   The sampler transparently falls back to NVML utilization (`gpu/util`, `gpu/mem_util`,
   `dcgm/source_tier=3` in wandb) rather than mislabeling a different metric.
-- 🔄 LR × batch sweep (6 × 250 steps) and Stage-2 subset prep (39 repos) running.
+- ✅ LR × batch sweep (250 steps each, megamix, held-out eval loss on cached batches):
+
+  | lr \ batch | 32 | 64 |
+  |---|---|---|
+  | 5e-5 | 1.04 | 0.97 |
+  | 1e-4 | 0.93 | 0.79 |
+  | 3e-4 | 0.75 | **0.59** |
+
+  Monotone trend toward higher LR + bigger batch; boundary probe at lr=6e-4/bs=64 pending.
+  (Eval-loss jitter of ±0.04 traced to the flow-matching head sampling noise in `forward`;
+  now seeded via `fork_rng` for step-comparable curves.)
+- 🔄 Stage-2 subset prep (39 repos, throttled to 3 containers for HF rate limits) running.
 
 ## Output
 

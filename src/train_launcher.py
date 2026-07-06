@@ -47,6 +47,32 @@ def parse_args():
     return p.parse_args()
 
 
+def resolve_auto_roots(args):
+    """--dataset-roots auto[:/base] globs prepared stage-2 roots inside the
+    container: every /base/<slug>/ with meta/info.json, excluding *_val and
+    megamix (megamix is stage-1, not part of the MolmoAct2 manifest). Val
+    roots are the matching <root>_val dirs."""
+    import glob
+
+    base = "/data/v2"
+    if ":" in args.dataset_roots:
+        base = args.dataset_roots.split(":", 1)[1]
+    roots = []
+    for info in sorted(glob.glob(f"{base}/*/meta/info.json")):
+        root = os.path.dirname(os.path.dirname(info))
+        name = os.path.basename(root)
+        if name.endswith("_val") or name.startswith("megamix"):
+            continue
+        if os.path.exists(f"{root}_val/meta/info.json"):
+            roots.append(root)
+        else:
+            print(f"[launcher] skipping {root}: no _val sibling")
+    assert roots, f"no prepared roots found under {base}"
+    args.dataset_roots = os.pathsep.join(roots)
+    args.val_roots = os.pathsep.join(f"{r}_val" for r in roots)
+    print(f"[launcher] auto roots: {len(roots)} datasets")
+
+
 def load_modality_config(path: str):
     import importlib
 
@@ -212,6 +238,9 @@ def main():
     from lora import apply_lora
 
     load_modality_config(MODALITY_CONFIG)
+
+    if args.dataset_roots.startswith("auto"):
+        resolve_auto_roots(args)
 
     exp_dir = os.path.join(args.output_dir, args.exp_name)
     volume = None

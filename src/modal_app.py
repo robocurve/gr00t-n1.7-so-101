@@ -219,7 +219,7 @@ def train(
     lr: float = 1e-4,
     bs: int = 32,
     max_steps: int = 20000,
-    keep_steps: int = 500,
+    keep_steps: int = 250,
     eval_steps: int = 250,
     fresh: bool = False,
     eval_batches: int = 48,

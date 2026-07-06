@@ -2,8 +2,8 @@
 
 Decision record, 2026-07-06. Applied from main-04 step ~3,300 onward: `save_steps=250` — chosen over the raw optimum band
 midpoint so saves align with `eval_steps=250` (every kept checkpoint carries an exact eval
-number) and with `keep_steps=500` (keeps fire every 2nd save; with 300 they would only fire
-at LCM(300,500)=1,500). Rolling window still 3 slots.
+number) and `keep_steps=250` (a durable, eval-annotated checkpoint at every save; ~88 keeps x ~1 GB
+over the run — cheap volume storage for full best-checkpoint history). Rolling window still 3 slots.
 
 ## Problem
 

@@ -221,6 +221,8 @@ def train(
     keep_steps: int = 500,
     eval_steps: int = 250,
     fresh: bool = False,
+    eval_batches: int = 48,
+    ds_weights_alpha: float = 0.5,
 ):
     """Main training. Preemption-safe: auto-resumes from the latest rolling checkpoint.
 
@@ -232,6 +234,10 @@ def train(
             *_train_cmd(
                 exp_name, dataset_roots, val_roots, lr, bs, max_steps,
                 keep_steps=keep_steps, eval_steps=eval_steps, fresh=fresh,
+                extra=[
+                    "--eval-batches", str(eval_batches),
+                    "--ds-weights-alpha", str(ds_weights_alpha),
+                ],
             ),
             env={**TRAIN_ENV, "WANDB_RUN_ID": exp_name},
         )

@@ -80,6 +80,8 @@ class FlopsCallback(TrainerCallback):
     def on_log(self, args, state, control, logs=None, **kwargs):
         if logs is None or not state.is_world_process_zero:
             return
+        if self.flops_per_step <= 0:
+            return  # not calibrated yet — log nothing rather than fake zeros
         total = self.flops_per_step * state.global_step
         now = time.time()
         logs["flops/total"] = total
@@ -147,6 +149,12 @@ class EvalLossCallback(TrainerCallback):
             wandb.log({"eval/loss": mean, "eval/n_batches": len(losses)}, commit=False)
         print(f"[eval] step {state.global_step}: eval/loss={mean:.4f} ({len(losses)} batches)")
         return mean
+
+    def on_train_begin(self, args, state, control, **kwargs):
+        # Build the eval cache (and thereby run FLOPs calibration via the
+        # first_batch_hook) BEFORE any training step, so flops metrics are
+        # live from the first log line — including after preemption resumes.
+        self.ensure_cached()
 
     def on_step_end(self, args, state, control, **kwargs):
         if state.global_step == 1 or state.global_step % self.every_steps == 0:

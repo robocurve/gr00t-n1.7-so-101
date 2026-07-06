@@ -281,7 +281,13 @@ def prepare_subset(limit: int = 0):
     data_vol.commit()
 
 
-@app.function(image=image, volumes=VOLS, secrets=secrets, timeout=4 * 3600, cpu=8, memory=32768)
+@app.function(
+    image=image, volumes=VOLS,
+    # hf-robocurve-write LAST so its HF_TOKEN (org-write scope) wins over the
+    # default huggingface-token secret (aris's, no org access).
+    secrets=[*secrets, modal.Secret.from_name("hf-robocurve-write")],
+    timeout=4 * 3600, cpu=8, memory=32768,
+)
 def publish(exp_name: str, step: int = 0, repo_id: str = ""):
     _run(
         "/root/proj/src/publish.py",

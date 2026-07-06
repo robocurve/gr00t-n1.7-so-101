@@ -284,9 +284,28 @@ def main():
     patch_trainable_only_checkpointing(PatchedTrainer)
     exp.Gr00tTrainer = PatchedTrainer
 
+    def is_rate_limited(e: BaseException) -> bool:
+        s = f"{type(e).__name__}: {e}"
+        return "429" in s or "rate limit" in s.lower() or "quota" in s.lower()
+
     sampler = start_gpu_metrics_thread(interval_s=10.0)
     try:
-        exp.run(config)
+        import time
+
+        for attempt in range(4):
+            try:
+                exp.run(config)
+                break
+            except Exception as e:  # noqa: BLE001
+                # HF 429s strike during setup (model/processor load), before any
+                # training step — safe to sleep out the 5-min quota window and
+                # re-enter run() with a freshly recomputed resume decision.
+                if attempt < 3 and is_rate_limited(e):
+                    print(f"[launcher] rate limited during setup; retry {attempt + 1}/3 in 330s")
+                    time.sleep(330)
+                    config.training.resume_from_checkpoint = wipe_or_resume(exp_dir, False, volume)
+                    continue
+                raise
     finally:
         try:
             sampler.stop()

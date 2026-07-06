@@ -56,8 +56,54 @@ def download_v2(repo_id: str, dest: Path):
     snapshot_download(repo_id, repo_type="dataset", local_dir=str(dest))
 
 
+def sanitize_v3_episode_metadata(root: Path):
+    """Fix internally inconsistent v3 repos (seen on whosricky/so101-megamix-v1):
+    meta/episodes rows duplicated per episode_index and `data/file_index`
+    referencing consolidated files that no longer exist. Safe transformation:
+    dedup by episode_index, and if the referenced data files are missing while
+    the existing ones cover the global from/to ranges, repoint every row at the
+    actual file layout (single consolidated file case)."""
+    import pandas as pd
+
+    data_files = sorted(root.glob("data/chunk-*/file-*.parquet"))
+    ep_files = sorted(root.glob("meta/episodes/chunk-*/file-*.parquet"))
+    if not ep_files:
+        return
+    for ep_file in ep_files:
+        df = pd.read_parquet(ep_file)
+        changed = False
+        if df["episode_index"].duplicated().any():
+            before = len(df)
+            df = df.drop_duplicates("episode_index", keep="first").reset_index(drop=True)
+            log(f"sanitize: dropped {before - len(df)} duplicate episode rows in {ep_file.name}")
+            changed = True
+        if "data/file_index" in df.columns and len(data_files) == 1:
+            referenced = {(int(c), int(f)) for c, f in zip(df["data/chunk_index"], df["data/file_index"])}
+            existing = {(int(p.parent.name.split("-")[1]), int(p.stem.split("-")[1])) for p in data_files}
+            if referenced - existing:
+                import pyarrow.parquet as pq
+
+                n_rows = pq.read_metadata(data_files[0]).num_rows
+                assert df["dataset_to_index"].max() <= n_rows, (
+                    f"global offsets ({df['dataset_to_index'].max()}) exceed rows in "
+                    f"{data_files[0]} ({n_rows}); cannot repoint safely"
+                )
+                chunk, file = next(iter(existing))
+                df["data/chunk_index"] = chunk
+                df["data/file_index"] = file
+                log(f"sanitize: repointed data indices to chunk-{chunk:03d}/file-{file:03d}")
+                changed = True
+        if changed:
+            df.to_parquet(ep_file)
+
+
 def convert_v3(repo_id: str, work: Path) -> Path:
     """Run the official v3->v2 converter; returns the (nested) output root."""
+    from huggingface_hub import snapshot_download
+
+    nested_src = work / repo_id
+    snapshot_download(repo_id, repo_type="dataset", local_dir=str(nested_src))
+    sanitize_v3_episode_metadata(nested_src)
     cmd = [
         "uv", "run", "--no-sync", "--project", "scripts/lerobot_conversion",
         "python", "scripts/lerobot_conversion/convert_v3_to_v2.py",

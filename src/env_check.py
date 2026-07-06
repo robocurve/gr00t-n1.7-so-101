@@ -92,16 +92,29 @@ def main():
         sys.path.insert(0, "/root/proj/src")
         from gpu_metrics import GpuMetricsSampler
 
-        sampler = GpuMetricsSampler(interval_s=2.0, sink="print")
-        sampler.start()
-        # busy loop of bf16 matmuls to light up tensor cores
-        a = torch.randn(4096, 4096, dtype=torch.bfloat16, device="cuda")
-        t0 = time.time()
-        while time.time() - t0 < 15:
-            a = a @ a
-            a = a / a.norm()
-        torch.cuda.synchronize()
-        sampler.stop()
+        # keep tensor cores busy DURING the sampler probe (fresh DCGM watches
+        # report N/A while warming; idle GPUs make values less informative)
+        stop_load = threading.Event()
+
+        def load():
+            a = torch.randn(4096, 4096, dtype=torch.bfloat16, device="cuda")
+            while not stop_load.is_set():
+                a = a @ a
+                a = a / a.norm()
+            torch.cuda.synchronize()
+
+        load_thread = threading.Thread(target=load, daemon=True)
+        load_thread.start()
+        try:
+            sampler = GpuMetricsSampler(interval_s=2.0, sink="print")
+            sampler.start()
+            t0 = time.time()
+            while time.time() - t0 < 30 and sampler.samples_taken < 3:
+                time.sleep(1)
+            sampler.stop()
+        finally:
+            stop_load.set()
+            load_thread.join(timeout=10)
         assert sampler.samples_taken >= 2, f"only {sampler.samples_taken} samples"
         return f"source={sampler.source}, samples={sampler.samples_taken}, last={sampler.last_values}"
 

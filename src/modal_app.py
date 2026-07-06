@@ -186,6 +186,19 @@ def sweep_one(lr: float, bs: int, steps: int = 250):
         ckpt_vol.commit()
 
 
+@app.local_entrypoint()
+def sweep_all(steps: int = 250, configs: str = "5e-5:32,5e-5:64,1e-4:32,3e-4:32,3e-4:64"):
+    """Run several sweep configs inside ONE app (avoids Modal's app-creation
+    rate limit that killed per-config `modal run` invocations)."""
+    pairs = []
+    for c in configs.split(","):
+        lr, bs = c.split(":")
+        pairs.append((float(lr), int(bs), steps))
+    results = list(sweep_one.starmap(pairs, return_exceptions=True))
+    for (lr, bs, _), r in zip(pairs, results):
+        print(f"sweep lr={lr} bs={bs}: {'OK' if not isinstance(r, Exception) else repr(r)[:200]}")
+
+
 @app.function(
     image=image,
     gpu="H100",

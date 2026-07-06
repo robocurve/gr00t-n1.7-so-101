@@ -125,11 +125,19 @@ class EvalLossCallback(TrainerCallback):
         model.eval()
         device = next(model.parameters()).device
         losses = []
-        with torch.no_grad(), torch.autocast("cuda", dtype=torch.bfloat16):
-            for batch in self._batches:
-                out = _model_call(model, _to_device(batch, device))
-                loss = out["loss"] if isinstance(out, dict) else out.loss
-                losses.append(float(loss.detach().float().cpu()))
+        # fork_rng + fixed seed: the flow-matching head samples noise/timesteps
+        # inside forward, so eval loss is stochastic (~±0.04 observed) even on
+        # cached inputs. Seeding makes the curve comparable step-to-step
+        # without touching training RNG state.
+        with torch.random.fork_rng(devices=[device] if device.type == "cuda" else []):
+            torch.manual_seed(20260706)
+            if device.type == "cuda":
+                torch.cuda.manual_seed_all(20260706)
+            with torch.no_grad(), torch.autocast("cuda", dtype=torch.bfloat16):
+                for batch in self._batches:
+                    out = _model_call(model, _to_device(batch, device))
+                    loss = out["loss"] if isinstance(out, dict) else out.loss
+                    losses.append(float(loss.detach().float().cpu()))
         if was_training:
             model.train()
         mean = sum(losses) / len(losses)

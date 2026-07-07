@@ -121,13 +121,17 @@ def wipe_or_resume(exp_dir: str, fresh: bool, volume=None) -> bool:
 
 
 def _ckpt_is_finite(ckpt_dir: str) -> bool:
+    """Complete AND finite. A container killed mid-save (e.g. `modal app stop`
+    during checkpoint write) leaves partial dirs — weights present but
+    trainer_state.json/optimizer.pt missing — which crash-loop HF resume."""
     from safetensors.torch import load_file
 
-    path = os.path.join(ckpt_dir, TRAINABLE_WEIGHTS)
-    if not os.path.exists(path):
-        return False
+    for required in (TRAINABLE_WEIGHTS, TRAINABLE_KEYS, "trainer_state.json",
+                     "optimizer.pt", "scheduler.pt"):
+        if not os.path.exists(os.path.join(ckpt_dir, required)):
+            return False
     try:
-        sd = load_file(path)
+        sd = load_file(os.path.join(ckpt_dir, TRAINABLE_WEIGHTS))
     except Exception:  # noqa: BLE001
         return False
     return all(torch.isfinite(t).all() for t in sd.values())

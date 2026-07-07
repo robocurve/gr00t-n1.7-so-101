@@ -98,6 +98,18 @@ uv run tests/test_ckpt_patches.py              # local ckpt/resume unit test
     checkpoint cost (see docs/checkpoint-interval.md).
 15. **`clang` + `build-essential` required** in the image: lerobot→pynput→evdev builds
     from source in the conversion env.
+15b. **Set `cpu=` on GPU train functions — Modal's default CPU allocation starves the GPU
+    on video datasets.** Measured on main-04: default alloc + 4 dataloader workers gave
+    GPU util median 0% (bursts to ~80%) and ~2.5-3.6 s/step on frame-heavy shards;
+    `cpu=16, memory=64G` + 8 workers → sustained 1.8 s/step incl. eval/save overhead
+    (~2x throughput, confirmed over 30+ min). Video decode (torchcodec, long mp4 seeks)
+    is the bottleneck, not the model. For YAM: consider pre-decoding or fps-subsampling
+    at prep time if datasets have long episodes.
+15c. **Never `modal app stop` during a checkpoint write** — it leaves a partial checkpoint
+    dir (weights present, trainer_state.json missing) that crash-loops HF resume through
+    all retries. Checkpoint validity checks must require ALL resume artifacts
+    (trainer_state.json, optimizer.pt, scheduler.pt, weights), not just weight finiteness
+    (`ckpt_patches._ckpt_is_finite`).
 
 ### HuggingFace Hub
 16. **The org token has a 1000 req/5min quota shared by EVERYTHING.** 39 unthrottled prep

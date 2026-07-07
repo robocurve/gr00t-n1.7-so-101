@@ -70,4 +70,6 @@ Key implementation points:
 
 ## Output
 
-Final checkpoint published to HuggingFace: [`robocurve/gr00t-n1.7-so101-molmoact2`](https://huggingface.co/robocurve/gr00t-n1.7-so101-molmoact2) (upon completion).
+✅ **Published:** [`robocurve/gr00t-n1.7-so101-molmoact2`](https://huggingface.co/robocurve/gr00t-n1.7-so101-molmoact2)
+— merged bf16 weights (best checkpoint, step 21,000, held-out eval loss 0.0273) + raw LoRA
+adapters under `adapters/`. See the model card for training details, sweep table, and caveats.

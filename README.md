@@ -59,7 +59,14 @@ Key implementation points:
   Optimum bracketed at **lr=6e-4, bs=64** (3e-4 → 0.59, 6e-4 → 0.44, 1.2e-3 → 0.79).
   (Eval-loss jitter of ±0.04 traced to the flow-matching head sampling noise in `forward`;
   now seeded via `fork_rng` for step-comparable curves.)
-- 🔄 Stage-2 subset prep (39 repos, throttled to 3 containers for HF rate limits) running.
+- ✅ Stage-2 prep: 39/39 repos converted (2,130 train / 112 val episodes, 1.8M frames).
+- ✅ Main run (`main-04`, wandb project `gr00t-n17-so101`): lr=3e-4, bs=64, 22,000 steps
+  (~0.8 epoch), 1× H100. Held-out eval loss **1.129 → 0.0273** (best at step 21,000;
+  tail converged flat ≈0.0273 under LR decay). Train loss 0.019. Survived one real
+  preemption (auto-resume, ≤5 steps lost). Earlier attempts documented in CLAUDE.md:
+  lr=6e-4 NaN'd at step 2.5k; mixed-aspect-ratio camera crash fixed with a uniform
+  256×256 letterbox; mid-run restarts re-derived the checkpoint cadence (Young–Daly,
+  docs/checkpoint-interval.md) and fixed GPU starvation (cpu=16 + 8 workers → 2× throughput).
 
 ## Output
 

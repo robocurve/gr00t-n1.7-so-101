@@ -103,8 +103,16 @@ uv run tests/test_ckpt_patches.py              # local ckpt/resume unit test
     GPU util median 0% (bursts to ~80%) and ~2.5-3.6 s/step on frame-heavy shards;
     `cpu=16, memory=64G` + 8 workers → sustained 1.8 s/step incl. eval/save overhead
     (~2x throughput, confirmed over 30+ min). Video decode (torchcodec, long mp4 seeks)
-    is the bottleneck, not the model. For YAM: consider pre-decoding or fps-subsampling
-    at prep time if datasets have long episodes.
+    is the bottleneck, not the model — even after the CPU fix, GPU util stays bursty
+    (mean ~34%, p90 ~89%, median ~1%): compute finishes fast, then waits on decode.
+    ~40% more headroom exists. Ranked fixes for the YAM repo (try in order):
+      (a) GPU-side decoding: torchcodec supports CUDA/NVDEC decoding (device="cuda") —
+          uses the GPU's dedicated video engine, not SMs; likely a near-one-liner in the
+          dataset's decode path and the highest-leverage option.
+      (b) Prep-time re-encode: short GOP (keyframe every ~8-16 frames for cheap seeks),
+          fixed 256px shortest edge, and/or fps subsampling — long-episode repos
+          (140k-frame hanoi-style mp4s) are the worst offenders.
+      (c) More CPU/workers (diminishing returns past cpu=16/8 workers at bs=64).
 15c. **Never `modal app stop` during a checkpoint write** — it leaves a partial checkpoint
     dir (weights present, trainer_state.json missing) that crash-loops HF resume through
     all retries. Checkpoint validity checks must require ALL resume artifacts

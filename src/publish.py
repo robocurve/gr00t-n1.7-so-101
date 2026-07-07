@@ -59,7 +59,7 @@ def main():
     # --- rebuild model with LoRA, load trainable weights, merge ---
     from gr00t.model.gr00t_n1d7.gr00t_n1d7 import Gr00tN1d7
 
-    model = Gr00tN1d7.from_pretrained(BASE_MODEL, torch_dtype=torch.float32)
+    model = Gr00tN1d7.from_pretrained(BASE_MODEL, torch_dtype=torch.float32, attn_implementation="eager")  # CPU container: flash-attn needs CUDA; no forward pass happens here
     model = apply_lora(model, r=args.lora_r, alpha=args.lora_alpha)
     sd = load_file(str(ckpt / "trainable.safetensors"))
     result = model.load_state_dict(sd, strict=False)
@@ -74,7 +74,7 @@ def main():
     out.mkdir(parents=True)
 
     # save merged model with the original architecture's key layout
-    base = Gr00tN1d7.from_pretrained(BASE_MODEL, torch_dtype=torch.float32)
+    base = Gr00tN1d7.from_pretrained(BASE_MODEL, torch_dtype=torch.float32, attn_implementation="eager")
     missing, unexpected = base.load_state_dict(merged_sd, strict=False)
     assert not unexpected, f"unexpected keys after merge: {unexpected[:5]}"
     assert not missing, f"missing keys after merge: {missing[:5]}"

@@ -137,7 +137,11 @@ policy = Gr00tPolicy.from_pretrained("{repo_id}")
 See the training repo for eval and serving instructions.
 """)
 
-    api = HfApi()
+    # Upload with the org-write token (HF_WRITE_TOKEN); model LOADING above ran
+    # under the default workspace token, whose account has accepted the gated
+    # Cosmos-Reason2-2B license (ours hasn't -> 403 on processor_config.json).
+    write_token = os.environ.get("HF_WRITE_TOKEN")
+    api = HfApi(token=write_token)
     api.create_repo(repo_id, repo_type="model", exist_ok=True)
     api.upload_folder(folder_path=str(out), repo_id=repo_id, repo_type="model")
     print(f"published -> https://huggingface.co/{repo_id}")

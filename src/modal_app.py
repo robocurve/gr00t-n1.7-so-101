@@ -227,6 +227,7 @@ def train(
     eval_batches: int = 48,
     ds_weights_alpha: float = 0.5,
     save_steps: int = 250,  # Young-Daly flat optimum, aligned with eval_steps (docs/checkpoint-interval.md)
+    dataloader_workers: int = 8,
 ):
     """Main training. Preemption-safe: auto-resumes from the latest rolling checkpoint.
 
@@ -242,6 +243,7 @@ def train(
                 extra=[
                     "--eval-batches", str(eval_batches),
                     "--ds-weights-alpha", str(ds_weights_alpha),
+                    "--dataloader-num-workers", str(dataloader_workers),
                 ],
             ),
             env={**TRAIN_ENV, "WANDB_RUN_ID": exp_name},

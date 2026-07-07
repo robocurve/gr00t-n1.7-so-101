@@ -206,6 +206,8 @@ def sweep_all(steps: int = 250, configs: str = "5e-5:32,5e-5:64,1e-4:32,3e-4:32,
 @app.function(
     image=image,
     gpu="H100",
+    cpu=16,          # video decode is the bottleneck: default CPU alloc starves the GPU
+    memory=65536,
     volumes=VOLS,
     secrets=secrets,
     timeout=23 * 3600,

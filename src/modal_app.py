@@ -290,7 +290,9 @@ def prepare_subset(limit: int = 0):
     # hf-robocurve-write LAST so its HF_TOKEN (org-write scope) wins over the
     # default huggingface-token secret (aris's, no org access).
     secrets=[*secrets, modal.Secret.from_name("hf-robocurve-write")],
-    timeout=4 * 3600, cpu=8, memory=32768,
+    # L4: Gr00tN1d7's loader hardcodes flash-attn, which demands a CUDA device
+    # even though publishing never runs a forward pass.
+    gpu="L4", timeout=4 * 3600, cpu=8, memory=65536,
 )
 def publish(exp_name: str, step: int = 0, repo_id: str = ""):
     _run(

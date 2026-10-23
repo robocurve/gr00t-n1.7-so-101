@@ -38,7 +38,7 @@ image = (
         " && dpkg -i cuda-keyring_1.1-1_all.deb && apt-get update"
         " && apt-get install -y datacenter-gpu-manager-4-cuda12"
     )
-    .pip_install("uv")
+    .pip_install("uv>=0.13.4")
     .run_commands(
         f"git clone https://github.com/NVIDIA/Isaac-GR00T.git {GR00T_DIR}"
         f" && cd {GR00T_DIR} && git checkout {GR00T_COMMIT}"

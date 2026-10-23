@@ -29,7 +29,7 @@ app = modal.App("gr00t-n17-so101")
 image = (
     modal.Image.from_registry("nvidia/cuda:12.8.1-devel-ubuntu22.04", add_python="3.10")
     .apt_install(
-        "git", "git-lfs", "ffmpeg", "libgl1", "libglib2.0-0", "wget", "gnupg", "curl",
+        "ca-certificates", "git", "git-lfs", "ffmpeg", "libgl1", "libglib2.0-0", "wget", "gnupg", "curl",
         "clang", "build-essential",  # evdev (lerobot->pynput dep) builds from source
     )
     # DCGM 4 for PROF_PIPE_TENSOR_ACTIVE (1004) / PROF_DRAM_ACTIVE (1005)
@@ -38,15 +38,26 @@ image = (
         " && dpkg -i cuda-keyring_1.1-1_all.deb && apt-get update"
         " && apt-get install -y datacenter-gpu-manager-4-cuda12"
     )
-    .pip_install("uv")
+    .add_local_file(
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "pip_bootstrap.py"),
+        "/opt/robocurve-bootstrap-pip.py", copy=True,
+    )
+    .run_commands("python /opt/robocurve-bootstrap-pip.py")
+    # The bootstrap handles old pip before enabling its modern opt-out flag.
+    .env({"PIP_CERT": "/etc/ssl/certs/ca-certificates.crt", "PIP_USE_DEPRECATED": "legacy-certs"})
+    .pip_install("uv>=0.13.4")
     .run_commands(
         f"git clone https://github.com/NVIDIA/Isaac-GR00T.git {GR00T_DIR}"
         f" && cd {GR00T_DIR} && git checkout {GR00T_COMMIT}"
-        " && uv sync --python 3.10"
+        # Update only the trust dependency requirement; preserve upstream GPU pins.
+        " && uv add --no-sync --python 3.10 'certifi>=2026.10.19'"
+        " && uv sync --locked --python 3.10"
     )
     # separate uv project for LeRobot v3 -> v2 conversion
     .run_commands(
-        f"cd {GR00T_DIR} && GIT_LFS_SKIP_SMUDGE=1 uv sync --project scripts/lerobot_conversion"
+        f"cd {GR00T_DIR} && GIT_LFS_SKIP_SMUDGE=1 uv add"
+        " --project scripts/lerobot_conversion --no-sync --python 3.10 'certifi>=2026.10.19'"
+        " && GIT_LFS_SKIP_SMUDGE=1 uv sync --locked --project scripts/lerobot_conversion"
     )
     .run_commands(f"cd {GR00T_DIR} && uv pip install '{CATEGORY_LORA_PIN}' nvidia-ml-py")
     .env(

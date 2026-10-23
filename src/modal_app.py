@@ -42,11 +42,15 @@ image = (
     .run_commands(
         f"git clone https://github.com/NVIDIA/Isaac-GR00T.git {GR00T_DIR}"
         f" && cd {GR00T_DIR} && git checkout {GR00T_COMMIT}"
-        " && uv sync --python 3.10"
+        # Update only the trust dependency requirement; preserve upstream GPU pins.
+        " && uv add --no-sync --python 3.10 'certifi>=2026.10.19'"
+        " && uv sync --locked --python 3.10"
     )
     # separate uv project for LeRobot v3 -> v2 conversion
     .run_commands(
-        f"cd {GR00T_DIR} && GIT_LFS_SKIP_SMUDGE=1 uv sync --project scripts/lerobot_conversion"
+        f"cd {GR00T_DIR} && GIT_LFS_SKIP_SMUDGE=1 uv add"
+        " --project scripts/lerobot_conversion --no-sync --python 3.10 'certifi>=2026.10.19'"
+        " && GIT_LFS_SKIP_SMUDGE=1 uv sync --locked --project scripts/lerobot_conversion"
     )
     .run_commands(f"cd {GR00T_DIR} && uv pip install '{CATEGORY_LORA_PIN}' nvidia-ml-py")
     .env(
